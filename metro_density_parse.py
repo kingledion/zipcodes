@@ -2,7 +2,6 @@
 
 import mysql.connector, csv
 from metro_density_utils import process_zip, zip_assigns, get_adjacent
-from math import sqrt, pi
 
 translate = {'A': 10, 'B': 60, 'C': 175, 'E': 375, 'F': 750, 'G': 1750, 'H': 3750, 'I': 7500, 'J': 17500, 'K': 37500, 'L': 75000, 'M': 125000}
 
@@ -13,12 +12,28 @@ translate = {'A': 10, 'B': 60, 'C': 175, 'E': 375, 'F': 750, 'G': 1750, 'H': 375
 #  [2] = employment (int)
 
 def main():
-    #data = read_files()
-    #data = assign_zips(data)
-    #insert_data(data)
-    #fix_no_geo_data()
-    merge_smalls()
+    sqlhaversine()
+    data = read_files()
+    data = assign_zips(data)
+    insert_data(data)
+    fix_no_geo_data()
+    #merge_smalls() FIX MEEEEE!!!!!
     #gen_adjacents()
+    
+    
+def sqlhaversine():
+
+    zip_db = mysql.connector.connect(user='dbuser', password='dbpass', database='zipcode')
+    zip_cursor = zip_db.cursor()
+        
+    zip_cursor.execute("DROP FUNCTION IF EXISTS haversine;")
+    sql = "CREATE FUNCTION haversine(lat1 FLOAT, lon1 FLOAT, lat2 FLOAT, lon2 FLOAT) RETURNS FLOAT NO SQL DETERMINISTIC COMMENT "
+    sql += "'Returns the distance in degrees on the Earth between two known points of latitude and longitude' BEGIN "
+    sql += "RETURN DEGREES(ACOS(COS(RADIANS(lat1)) * COS(RADIANS(lat2)) * COS(RADIANS(lon2) - RADIANS(lon1)) + SIN(RADIANS(lat1)) * SIN(RADIANS(lat2))));"
+    sql += "END;"
+    
+    zip_cursor.execute(sql)
+    zip_db.commit()
     
     
 def read_files():
@@ -38,7 +53,7 @@ def read_files():
     query += " emp INT, emp_pay INT, area FLOAT, location POINT, households INT)"
     zip_cursor.execute(query)
     
-    with open('data/zip_population.csv', 'r') as f: 
+    with open('/opt/apps/zipcodes/data/zip_population.csv', 'r') as f: 
         rdr = csv.reader(f, delimiter=',')
         next(rdr) # not using a dictreader, skip the column headers
     
@@ -48,7 +63,7 @@ def read_files():
     print('read population')
     
     	
-    with open('data/zip_employment.txt', 'r') as f:
+    with open('/opt/apps/zipcodes/data/zip_employment.txt', 'r') as f:
         rdr = csv.reader(f, delimiter = ',', quotechar = '"')
         next(rdr) # not using a dictreader, skip the column headers
         
@@ -67,7 +82,7 @@ def read_files():
                 
     print('read employment')    
     
-    with open('data/zip_geography.txt', 'r') as f:
+    with open('/opt/apps/zipcodes/data/zip_geography.txt', 'r') as f:
         rdr = csv.reader(f, delimiter = '\t')
         next(rdr)
         
@@ -79,7 +94,7 @@ def read_files():
             
     print('read geography')
     
-    with open('data/ACS_15_5YR_B11011_with_ann.csv', 'r') as f:
+    with open('/opt/apps/zipcodes/data/ACS_15_5YR_B11011_with_ann.csv', 'r') as f:
         rdr = csv.reader(f, delimiter = ',', quotechar = '"')
         next(rdr)
         next(rdr)

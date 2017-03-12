@@ -5,27 +5,25 @@ Created on Mon Mar  7 18:14:33 2016
 @author: dhartig
 """
 
-import mysql.connector, numpy as np, metro_density_utils as mdu
+import numpy as np, metro_density_utils as mdu
 from metro_density_assignments import list_of_all
 
 
 def test_main():
-    zip_db = mysql.connector.connect(user='dbuser', password='dbpass', database='zipcode')
-    zip_cursor = zip_db.cursor()
+    zip_db, zip_cursor = mdu.opendb() 
     
     for r in mdu.get_adjacent(zip_cursor, mdu.zipdata.fromzip(zip_cursor, '10017')):
         print(r['name'], r['zipcode'])
         
 def main():
     
-    zip_db = mysql.connector.connect(user='dbuser', password='dbpass', database='zipcode')
-    zip_cursor = zip_db.cursor()
+    zip_db, zip_cursor = mdu.opendb() 
     
     summary = []
     
     for start, name in list_of_all:
     
-        ret = build_min_area(zip_cursor, start, 25)
+        ret = build_min_area(zip_cursor, start, 2000)
         summary.append([name] + [int(x) for x in ret])
         print(name)
         
@@ -36,8 +34,7 @@ def main():
         print("|".join(str(word) for word in row))#str(word).ljust(colwidth) for word in row))
         
 def main2():
-    zip_db = mysql.connector.connect(user='dbuser', password='dbpass', database='zipcode')
-    zip_cursor = zip_db.cursor()
+    zip_db, zip_cursor = mdu.opendb()
     
     build_min_area(zip_cursor, 44114, 1000)
 
