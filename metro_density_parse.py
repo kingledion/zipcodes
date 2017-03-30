@@ -1,7 +1,7 @@
 #! /home/dhartig/Downloads/anaconda3/bin/python
 
-import mysql.connector, csv
-from metro_density_utils import process_zip, zip_assigns, get_adjacent
+import mysql.connector, csv, metro_density_utils as mdu
+from metro_density_assignments import zip_assigns
 
 translate = {'A': 10, 'B': 60, 'C': 175, 'E': 375, 'F': 750, 'G': 1750, 'H': 3750, 'I': 7500, 'J': 17500, 'K': 37500, 'L': 75000, 'M': 125000}
 
@@ -17,7 +17,7 @@ def main():
     data = assign_zips(data)
     insert_data(data)
     fix_no_geo_data()
-    #merge_smalls() FIX MEEEEE!!!!!
+    merge_smalls() #FIX MEEEEE!!!!!
     #gen_adjacents()
     
     
@@ -53,7 +53,7 @@ def read_files():
     query += " emp INT, emp_pay INT, area FLOAT, location POINT, households INT)"
     zip_cursor.execute(query)
     
-    with open('/opt/apps/zipcodes/data/zip_population.csv', 'r') as f: 
+    with open('/opt/zipcodes/data/zip_population.csv', 'r') as f: 
         rdr = csv.reader(f, delimiter=',')
         next(rdr) # not using a dictreader, skip the column headers
     
@@ -63,7 +63,7 @@ def read_files():
     print('read population')
     
     	
-    with open('/opt/apps/zipcodes/data/zip_employment.txt', 'r') as f:
+    with open('/opt/zipcodes/data/zip_employment.txt', 'r') as f:
         rdr = csv.reader(f, delimiter = ',', quotechar = '"')
         next(rdr) # not using a dictreader, skip the column headers
         
@@ -82,7 +82,7 @@ def read_files():
                 
     print('read employment')    
     
-    with open('/opt/apps/zipcodes/data/zip_geography.txt', 'r') as f:
+    with open('/opt/zipcodes/data/zip_geography.txt', 'r') as f:
         rdr = csv.reader(f, delimiter = '\t')
         next(rdr)
         
@@ -94,7 +94,7 @@ def read_files():
             
     print('read geography')
     
-    with open('/opt/apps/zipcodes/data/ACS_15_5YR_B11011_with_ann.csv', 'r') as f:
+    with open('/opt/zipcodes/data/ACS_15_5YR_B11011_with_ann.csv', 'r') as f:
         rdr = csv.reader(f, delimiter = ',', quotechar = '"')
         next(rdr)
         next(rdr)
@@ -223,7 +223,7 @@ def merge_smalls():
     while len(zip_list) > 0:
         
         zcode, pop, emp, emp_pay, area, households =  zip_list[0]
-        nearest = process_zip(zip_cursor, zcode)[0]      
+        nearest = mdu.get_adjacent(zip_cursor, zcode)[0]      
         
         pop_up = pop + nearest['pop']
         emp_up = emp + nearest['emp']
@@ -293,7 +293,7 @@ def gen_adjacents():
     
     for z in zip_list:
         print(z)
-        adj = get_adjacent(zip_cursor, z)
+        adj = mdu.get_adjacent(zip_cursor, z)
         for a in adj:
             print(">>>", a)
         input()
